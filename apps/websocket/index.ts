@@ -22,7 +22,7 @@ server.on("connection", (socket) => {
                 const user = ROOMS[boardId][i];
                 user.socket.send(JSON.stringify({
                     type: "join",
-                    userId: newUserId
+                    userId: { id: newUserId }
                 }))
             }
 
@@ -30,21 +30,22 @@ server.on("connection", (socket) => {
 
             socket.send(JSON.stringify({
                 type: "initial_state",
-                user: ROOMS.filter(x => x.id != newUserId).map(u => u.id)
+                users: ROOMS[boardId].filter(x => x.userId != newUserId).map(u => ({id: u.userId}))
             }))
 
         }
     })
 
     socket.on("close", () => {
-        Object.entries(ROOMS).map(([roomId, users]){
+        Object.entries(ROOMS).map(([roomId, users]) => {
             const usersExist = users.find(u => u.socket == socket)
             if (usersExist){
-                users =  users.filter( x=> x.socket = socket);
+                console.log("user left room", roomId)
+                ROOMS[roomId] =  ROOMS[roomId].filter( x=> x.socket != socket);         
                 users.forEach(({socket}) =>{
                     socket.send(JSON.stringify({
                         type: "leave",
-                        userId: usersExist.id
+                        userId: usersExist.userId  
                     }))
                 })
             }
